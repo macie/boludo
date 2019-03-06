@@ -4,5 +4,9 @@ services:
   boludo:
     image: boludo
     build: .
+    stdin_open: true
+    tty: true
     ports:
       - 3001:3001
+    volumes:
+      - ./src:/home/boludo/app
