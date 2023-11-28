@@ -1,0 +1,49 @@
+# Copyright (C) 2023 Maciej Żok
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Quality check
+on:
+  push:
+    branches:
+    - "*"
+  pull_request:
+
+jobs:
+  checks:
+    name: Validate sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+     
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: Install dependencies
+        run: |
+          pip3 install --user reuse
+          make
+
+      - run: make check
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: Install dependencies
+        run: make
+
+      - run: make test
