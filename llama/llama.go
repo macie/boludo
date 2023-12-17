@@ -97,6 +97,36 @@ func (m Model) MaxContextSize() int {
 	return int(C.llama_n_ctx_train(C.llama_get_model(m.context)))
 }
 
+// Tokenize transforms string into ordered list of tokens from model vocabulary.
+func (m Model) Tokenize(s string) ([]int, error) {
+	input := C.CString(s)
+	defer C.free(unsafe.Pointer(input))
+	maxTokensNo := m.MaxContextSize() // FIXME: restrictions make sense for inference, not tokenization
+	tokens := make([]C.int, maxTokensNo)
+	tokensPtr := (*C.int)(unsafe.Pointer(&tokens[0]))
+
+	// tokens can be decoded with: `C.GoString(C.llama_token_get_text(C.llama_get_model(m.context), tokens[i]))`
+	tokensNo := C.llama_tokenize(
+		C.llama_get_model(m.context),
+		input,
+		C.int(len(s)),
+		tokensPtr,
+		C.int(maxTokensNo),
+		C.bool(false),
+		C.bool(false),
+	)
+	if tokensNo < 0 {
+		return nil, errors.New("couldn't tokenize string")
+	}
+
+	output := make([]int, int(tokensNo))
+	for i := 0; i < int(tokensNo); i++ {
+		output[i] = int(tokens[i])
+	}
+
+	return output, nil
+}
+
 // Close frees all resources associated with model.
 func (m Model) Close() {
 	C.llama_free(m.context)

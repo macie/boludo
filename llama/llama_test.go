@@ -57,3 +57,26 @@ func TestModelMaxContextSize(t *testing.T) {
 		t.Fatalf("MaxContextSize() = %v; want %v", got, want)
 	}
 }
+
+func TestModelTokenize(t *testing.T) {
+	server := NewServer()
+	defer server.Close()
+	model, err := NewModel(Options{
+		ModelPath: testingModelPath,
+	})
+	if err != nil {
+		t.Fatalf("NewModel(options) returns error: %v", err)
+	}
+	defer model.Close()
+
+	input := "Hello, World!"
+	want := []int{16644, 31844, 1715, 31905}
+
+	got, err := model.Tokenize(input)
+	if err != nil {
+		t.Fatalf("Tokenize(%v) returns error: %v", input, err)
+	}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Fatalf("Tokenize(%v) goes wrong; got %v, want %v", input, got, want)
+	}
+}
