@@ -60,6 +60,8 @@ dist:
 install-dependencies:
 	@echo '# Install CLI dependencies:' >&2
 	# @go get -C cmd/ -v -x .
+	@echo '# Build libllama.so'
+	cd ./external/llama.cpp; make libllama.so
 
 cli-release: check test
 	@echo '# Update local branch' >&2

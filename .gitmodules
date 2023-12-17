@@ -1,0 +1,8 @@
+# Copyright (C) 2023 Maciej Żok
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[submodule "external/llama.cpp"]
+	path = external/llama.cpp
+	url = git@github.com:ggerganov/llama.cpp.git
+	shallow = true
