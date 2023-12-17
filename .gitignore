@@ -6,6 +6,7 @@
 *
 
 # Allow CI configs
+!/.gitattributes
 !/.gitignore
 !/.github/workflows/*.yml
 !/Makefile
@@ -21,3 +22,7 @@
 
 # ...also in subdirectories
 !*/
+
+# Allow external dependency
+!/external/TinyLLama-v0.Q8_0.gguf
+!/external/TinyLLama-v0.Q8_0.gguf.license
