@@ -61,7 +61,7 @@ install-dependencies:
 	@echo '# Install CLI dependencies:' >&2
 	# @go get -C cmd/ -v -x .
 	@echo '# Build libllama.so'
-	cd ./external/llama.cpp; make libllama.so
+	cd ./external/llama.cpp; make server && cp server ../../llm-server
 
 cli-release: check test
 	@echo '# Update local branch' >&2
