@@ -76,8 +76,11 @@ func (s *Server) Start() error {
 
 // Ping checks if server is running.
 func (s *Server) Ping() bool {
+	// 130 ms is an average DNS lookup time observed by Googlebot
+	// See: https://developers.google.com/speed/public-dns/docs/performance#cache_misses
+	timeoutDNS := 130 * time.Millisecond
 	addr := net.JoinHostPort(s.host, fmt.Sprint(s.port))
-	conn, err := net.DialTimeout("tcp", addr, 10*time.Millisecond)
+	conn, err := net.DialTimeout("tcp", addr, timeoutDNS)
 	if err != nil || conn == nil {
 		return false
 	}
