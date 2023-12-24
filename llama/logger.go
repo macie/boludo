@@ -7,28 +7,28 @@ package llama
 import (
 	"bufio"
 	"bytes"
-	"io"
 	"log"
 )
 
 // CmdLogger is a log.Logger wrapper for exec.Cmd output.
 type CmdLogger struct {
-	logger *log.Logger
-}
-
-// NewCmdLogger creates new CmdLogger.
-func NewCmdLogger(out io.Writer, prefix string, flag int) *CmdLogger {
-	return &CmdLogger{logger: log.New(out, prefix, flag)}
+	// Log specifies an optional logger for exec.Cmd output
+	// If nil, logging is done via the log package's standard logger.
+	ErrorLog *log.Logger
 }
 
 // Write implements io.Writer.
-func (e CmdLogger) Write(p []byte) (n int, err error) {
+func (c CmdLogger) Write(p []byte) (n int, err error) {
+	if c.ErrorLog == nil {
+		c.ErrorLog = log.Default()
+	}
+
 	scanner := bufio.NewScanner(bytes.NewReader(p))
 	for scanner.Scan() {
 		if scanner.Text() == "" || scanner.Text() == "." {
 			continue
 		}
-		e.logger.Println(scanner.Text())
+		c.ErrorLog.Println(scanner.Text())
 	}
 	return len(p), nil
 }

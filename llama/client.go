@@ -39,22 +39,16 @@ type completionResponse struct {
 
 // Client represents client for LLM server.
 type Client struct {
+	// URL specifies the address of the underlying LLM server.
+	// If empty, the default URL is used: `http://localhost:24114`.
 	URL string
-}
-
-// NewClient creates new Client of LLM server running at given URL.
-func NewClient(url string) *Client {
-	client := &Client{
-		URL: url,
-	}
-	return client
 }
 
 // Complete returns a channel with completion results for given string.
 func (c *Client) Complete(ctx context.Context, s string) (chan string, error) {
 	req := completionRequest{
 		Prompt:          s,
-		Temp:            2.4,
+		Temp:            1.2,
 		TopK:            40,
 		MinP:            0.05,
 		TopP:            0.0,
@@ -72,12 +66,18 @@ func (c *Client) Complete(ctx context.Context, s string) (chan string, error) {
 
 // infer is a low-level function for sending completion requests to the LLM server.
 func (c *Client) infer(ctx context.Context, req completionRequest) (chan string, error) {
+	url := c.URL
+	if c.URL == "" {
+		url = "http://localhost:24114"
+	}
+	url = fmt.Sprintf("%s/completion", url)
+
 	// FIXME: use context
 	reqBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("completion request cannot be serialized: %w", err)
 	}
-	resp, err := http.Post(c.URL+"/completion", "text/event-stream", bytes.NewBuffer(reqBody))
+	resp, err := http.Post(url, "text/event-stream", bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, fmt.Errorf("completion request cannot be sent: %w", err)
 	}

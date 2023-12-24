@@ -11,15 +11,13 @@ import (
 )
 
 func TestComplete(t *testing.T) {
-	server := NewServer(context.TODO(), serverPath, Options{ModelPath: testingModel})
+	server := setupTestServer(t)
+	if err := server.Start(context.TODO()); err != nil {
+		t.Fatalf("cannot start a LLM server: %v", err)
+	}
 	defer server.Close()
 
-	if err := server.Start(); err != nil {
-		t.Fatalf("server.Start() returns error: %v", err)
-	}
-
-	client := NewClient("http://localhost:24114")
-
+	client := Client{}
 	c, err := client.Complete(context.TODO(), "Once upon a time")
 	if err != nil {
 		t.Fatalf("client.Complete() returns error: %v", err)
