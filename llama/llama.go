@@ -4,10 +4,19 @@
 
 package llama
 
-// Options represent parameters for interacting with LLAMA model.
+// DefaultOptions represent neutral parameters for interacting with LLaMA model.
+var DefaultOptions = Options{
+	ModelPath: "",
+	Seed:      0,
+	Temp:      1,
+	MinP:      0,
+}
+
+// Options represent parameters for interacting with LLaMA model.
 type Options struct {
 	ModelPath string
-	Seed      uint
+	Format    string
 	Temp      float32
-	Min_P     float32
+	MinP      float32
+	Seed      uint
 }
