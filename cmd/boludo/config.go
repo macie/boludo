@@ -8,8 +8,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/macie/boludo/llama"
 )
 
@@ -80,4 +82,83 @@ func (a ConfigArgs) Options() llama.Options {
 	}
 
 	return options
+}
+
+// ConfigFile represents a configuration file.
+type ConfigFile map[string]ModelSpec
+
+// ModelSpec represents a model specification in the configuration file.
+type ModelSpec struct {
+	Model      string
+	Format     string
+	Creativity float32
+	Cutoff     float32
+}
+
+// ParseFile reads the TOML configuration file and returns a ConfigFile.
+//
+// Config file should exist in default location (see `os.UserConfigDir()`):
+//   - on Linux in `$XDG_CONFIG_HOME/boludo/boludo.toml` or `$HOME/.config/boludo/boludo.toml`
+//   - on macOS in `$HOME/Library/Application Support/boludo/boludo.toml`
+//   - on Windows in `%APPDATA%\boludo\boludo.toml`.
+//
+// If the file doesn't exist, an empty ConfigFile is returned.
+func ParseFile(configDir fs.FS, filename string) (ConfigFile, error) {
+	file, err := configDir.Open(filename)
+	if err != nil {
+		return ConfigFile{}, fmt.Errorf("could not open '%s': %w", filename, err)
+	}
+	defer file.Close()
+
+	config := ConfigFile{}
+	_, decodeErr := toml.NewDecoder(file).Decode(&config)
+	if decodeErr != nil {
+		return ConfigFile{}, fmt.Errorf("could not read config file: %w", decodeErr)
+	}
+
+	return config, nil
+}
+
+// UnmarshalTOML implements toml.Unmarshaler interface.
+//
+// Values not defined in the config file will be set to the default values
+func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
+	definedConfigs, _ := data.(map[string]interface{})
+	for configId := range definedConfigs {
+		defaultSpec := ModelSpec{
+			Model:      "",
+			Format:     llama.DefaultOptions.Format,
+			Creativity: llama.DefaultOptions.Temp,
+			Cutoff:     llama.DefaultOptions.MinP,
+		}
+		for k, v := range definedConfigs[configId].(map[string]interface{}) {
+			switch k {
+			case "model":
+				defaultSpec.Model = v.(string)
+			case "creativity":
+				defaultSpec.Creativity = (float32)(v.(float64))
+			case "cutoff":
+				defaultSpec.Cutoff = (float32)(v.(float64))
+			}
+		}
+		(*c)[configId] = defaultSpec
+	}
+	return nil
+}
+
+// Options returns the llama.Options based on the ConfigFile.
+//
+// It uses default values from llama.DefaultOptions for options not specified in
+// config file.
+func (c *ConfigFile) Options(configId string) llama.Options {
+	if spec, ok := (*c)[configId]; ok {
+		return llama.Options{
+			ModelPath: spec.Model,
+			Format:    spec.Format,
+			Temp:      spec.Creativity,
+			MinP:      spec.Cutoff,
+		}
+	}
+
+	return llama.DefaultOptions
 }
