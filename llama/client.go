@@ -39,18 +39,25 @@ type completionResponse struct {
 
 // Client represents client for LLM server.
 type Client struct {
-	// URL specifies the address of the underlying LLM server.
-	// If empty, the default URL is used: `http://localhost:24114`.
-	URL string
+	// Addr specifies the address of the LLM server.
+	// If empty, "localhost:24114" is used.
+	Addr string
+
+	// Options specifies options for underlying LLM server.
+	// If nil, DefaultOptions are used.
+	Options *Options
 }
 
 // Complete returns a channel with completion results for given string.
 func (c *Client) Complete(ctx context.Context, s string) (chan string, error) {
+	if c.Options == nil {
+		c.Options = &DefaultOptions
+	}
 	req := completionRequest{
 		Prompt:          s,
-		Temp:            1.2,
+		Temp:            c.Options.Temp,
 		TopK:            40,
-		MinP:            0.05,
+		MinP:            c.Options.MinP,
 		TopP:            0.0,
 		Seed:            -1,
 		PredictNum:      150,
@@ -66,11 +73,10 @@ func (c *Client) Complete(ctx context.Context, s string) (chan string, error) {
 
 // infer is a low-level function for sending completion requests to the LLM server.
 func (c *Client) infer(ctx context.Context, req completionRequest) (chan string, error) {
-	url := c.URL
-	if c.URL == "" {
-		url = "http://localhost:24114"
+	if c.Addr == "" {
+		c.Addr = "localhost:24114"
 	}
-	url = fmt.Sprintf("%s/completion", url)
+	url := fmt.Sprintf("http://%s/completion", c.Addr)
 
 	reqBody, err := json.Marshal(req)
 	if err != nil {
