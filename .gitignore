@@ -14,6 +14,7 @@
 # Allow source code...
 !*.go
 !go.sum
+!go.sum.license
 !go.mod
 
 !README.md
