@@ -23,12 +23,17 @@ func (c CmdLogger) Write(p []byte) (n int, err error) {
 		c.ErrorLog = log.Default()
 	}
 
+	progressbarPattern := regexp.MustCompile(`^\.*$`)
 	scanner := bufio.NewScanner(bytes.NewReader(p))
 	for scanner.Scan() {
-		if scanner.Text() == "" || scanner.Text() == "." {
+		line := scanner.Text()
+		if line == "" {
 			continue
 		}
-		c.ErrorLog.Println(scanner.Text())
+		if strings.HasPrefix(line, ".") && progressbarPattern.MatchString(line) {
+			continue
+		}
+		c.ErrorLog.Println(line)
 	}
 	return len(p), nil
 }
