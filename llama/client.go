@@ -72,12 +72,16 @@ func (c *Client) infer(ctx context.Context, req completionRequest) (chan string,
 	}
 	url = fmt.Sprintf("%s/completion", url)
 
-	// FIXME: use context
 	reqBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("completion request cannot be serialized: %w", err)
 	}
-	resp, err := http.Post(url, "text/event-stream", bytes.NewBuffer(reqBody))
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("completion request cannot be created: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("completion request cannot be sent: %w", err)
 	}
