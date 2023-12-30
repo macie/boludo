@@ -6,12 +6,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -34,6 +36,74 @@ const helpMsg = "boludo - AI personal assistant\n" +
 	"   -v              show version information and exit\n" +
 	"\n" +
 	"boludo reads prompt from PROMPT, and then from standard input"
+
+var AppVersion = "local-dev"
+
+// Version returns string with full version description.
+func Version() string {
+	return fmt.Sprintf("boludo %s", AppVersion)
+}
+
+// AppConfig contains configuration options for the program.
+type AppConfig struct {
+	Options     llama.Options
+	ServerPath  string
+	Prompt      string
+	Timeout     time.Duration
+	Verbose     bool
+	ExitMessage string
+}
+
+// NewAppConfig creates a new AppConfig from:
+//   - command line arguments
+//   - config file
+//   - default values
+//
+// in that order.
+func NewAppConfig(cliArgs []string) (AppConfig, error) {
+	configArgs, err := ParseArgs(cliArgs)
+	if err != nil {
+		return AppConfig{}, fmt.Errorf("could not read CLI arguments: %w", err)
+	}
+	if configArgs.ShowHelp {
+		return AppConfig{ExitMessage: helpMsg}, nil
+	}
+	if configArgs.ShowVersion {
+		return AppConfig{ExitMessage: Version()}, nil
+	}
+
+	configRoot, err := os.UserConfigDir()
+	if err != nil {
+		return AppConfig{}, fmt.Errorf("could not locate config directory: %w", err)
+	}
+	configDir := filepath.Join(configRoot, "boludo")
+	configFile, err := ParseFile(os.DirFS(configDir), "boludo.toml")
+	switch {
+	case err == nil:
+		// no error
+	case errors.Is(err, os.ErrNotExist):
+		// ignore missing config file
+	default:
+		return AppConfig{}, fmt.Errorf("could not read `%s`: %w", filepath.Join(configDir, "boludo.toml"), err)
+	}
+
+	options := llama.DefaultOptions
+	options.Update(configFile.Options(configArgs.ConfigId))
+	options.Update(configArgs.Options())
+
+	prompt := configArgs.Prompt
+	if spec, ok := configFile[configArgs.ConfigId]; ok {
+		prompt = fmt.Sprintf("%s %s", spec.InitialPrompt, configArgs.Prompt)
+	}
+
+	return AppConfig{
+		Prompt:     prompt,
+		Options:    options,
+		ServerPath: configArgs.ServerPath,
+		Timeout:    configArgs.Timeout,
+		Verbose:    configArgs.ShowVerbose,
+	}, nil
+}
 
 // NewAppContext returns a cancellable context which is:
 // - cancelled when the interrupt signal is received

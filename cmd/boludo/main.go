@@ -5,48 +5,71 @@
 package main
 
 import (
-	"bufio"
+	"context"
 	"fmt"
-	"io"
+	"log/slog"
 	"os"
-	"strings"
+
+	"github.com/macie/boludo"
+	"github.com/macie/boludo/llama"
 )
 
 func main() {
-	fmt.Fprintln(os.Stdout, "Hello! I'm boludo. You can ask me anything or enter empty line to exit.")
-	fmt.Fprintln(os.Stdout, "")
-	fmt.Fprintln(os.Stdout, "How can I help you?")
+	defaultLogHandler := boludo.UnstructuredHandler{Prefix: "[boludo]", Level: slog.LevelError}
+	slog.SetDefault(slog.New(defaultLogHandler))
 
-	for {
-		fmt.Fprint(os.Stdout, "> ")
-		output, err := readline(os.Stdin)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
-			os.Exit(1)
-		}
+	config, err := NewAppConfig(os.Args[1:])
+	if err != nil {
+		slog.Error(fmt.Sprint(err))
+		os.Exit(1)
+	}
 
-		if fmt.Sprint(output) == "" {
-			fmt.Fprintln(os.Stdout, "< Goodbye!")
-			break
-		}
+	if config.ExitMessage != "" {
+		fmt.Fprintln(os.Stdin, config.ExitMessage)
+		os.Exit(0)
+	}
+	if config.Verbose {
+		defaultLogHandler.Level = slog.LevelInfo
+		slog.SetDefault(slog.New(defaultLogHandler))
+	}
 
-		fmt.Fprintf(os.Stdout, "< I don't understand: %s", output)
-		fmt.Fprintln(os.Stdout, "")
-		fmt.Fprintln(os.Stdout, "")
+	ctx, cancel := NewAppContext(config)
+	defer cancel()
+
+	server := llama.Server{
+		Path:   config.ServerPath,
+		Logger: slog.New(boludo.UnstructuredHandler{Prefix: "[llm-server]", Level: defaultLogHandler.Level}),
+	}
+	llama.SetDefault(server)
+
+	if err := llama.Serve(ctx, config.Options.ModelPath); err != nil {
+		slog.Error(fmt.Sprint(err))
+		os.Exit(1)
+	}
+	defer llama.Close()
+
+	output, err := llama.Complete(ctx, config.Prompt)
+	if err != nil {
+		slog.Error(fmt.Sprint(err))
+		os.Exit(1)
+	}
+
+	fmt.Fprint(os.Stdout, config.Prompt)
+
+	for token := range output {
+		fmt.Fprint(os.Stdout, token)
+	}
+
+	switch ctx.Err() {
+	case nil:
+		// no error
+	case context.Canceled:
+		slog.Info("completion cancelled by user")
+	case context.DeadlineExceeded:
+		slog.Info("completion needs more time than expected")
+	default:
+		slog.Info("completion was interrupted")
 	}
 
 	os.Exit(0)
-}
-
-func readline(r io.Reader) (io.Writer, error) {
-	s := bufio.NewScanner(r)
-	output := new(strings.Builder)
-
-	s.Scan()
-	output.WriteString(strings.TrimRight(s.Text(), " "))
-	if err := s.Err(); err != nil {
-		return nil, err
-	}
-
-	return output, nil
 }
