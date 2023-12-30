@@ -19,8 +19,9 @@ import (
 
 // Server represents LLM server.
 type Server struct {
-	// ModelPath specifies the path to the model file in GGUF format.
-	ModelPath string
+	// Path specifies a path to LLM server executable.
+	// If empty, "./llm-server" is used.
+	Path string
 
 	// Addr optionally specifies the TCP address for the server to listen on,
 	// in the form "host:port".
@@ -40,13 +41,28 @@ type Server struct {
 // Start starts LLM server.
 //
 // It is the caller's responsibility to close Server.
-func (s *Server) Start(ctx context.Context) error {
-	f, err := os.Stat(s.ModelPath)
-	if err != nil {
-		return fmt.Errorf("cannot start a LLM server: model '%s' not found: %w", s.ModelPath, err)
+func (s *Server) Start(ctx context.Context, modelPath string) error {
+	if s.Path == "" {
+		dir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("cannot start a LLM server: cannot get current directory: %w", err)
+		}
+		s.Path = path.Join(dir, "./llm-server")
+	}
+	f, errServer := os.Stat(s.Path)
+	if errServer != nil {
+		return fmt.Errorf("cannot start a LLM server: server not found at '%s': %w", s.Path, errServer)
 	}
 	if f.IsDir() {
-		return fmt.Errorf("cannot start a LLM server: model path '%s' is a directory", s.ModelPath)
+		return fmt.Errorf("cannot start a LLM server: server path '%s' is a directory", modelPath)
+	}
+
+	f, err := os.Stat(modelPath)
+	if err != nil {
+		return fmt.Errorf("cannot start a LLM server: model '%s' not found: %w", modelPath, err)
+	}
+	if f.IsDir() {
+		return fmt.Errorf("cannot start a LLM server: model path '%s' is a directory", modelPath)
 	}
 
 	if s.Logger == nil {
@@ -66,10 +82,10 @@ func (s *Server) Start(ctx context.Context) error {
 			ErrorLog: s.Logger,
 		}
 		s.Cmd = exec.CommandContext(ctx,
-			"./llm-server",
+			s.Path,
 			"--host", host,
 			"--port", port,
-			"--model", s.ModelPath,
+			"--model", modelPath,
 			"--threads", fmt.Sprint(runtime.NumCPU()),
 			"--ctx-size", fmt.Sprint(2048),
 		)

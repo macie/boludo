@@ -11,8 +11,9 @@ import (
 )
 
 func TestComplete(t *testing.T) {
-	server := setupTestServer(t)
-	if err := server.Start(context.TODO()); err != nil {
+	const testingModel = "../external/TinyLLama-v0.Q8_0.gguf"
+	server := Server{Path: "../llm-server"}
+	if err := server.Start(context.TODO(), testingModel); err != nil {
 		t.Fatalf("cannot start a LLM server: %v", err)
 	}
 	defer server.Close()

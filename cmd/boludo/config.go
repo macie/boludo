@@ -18,12 +18,13 @@ import (
 const helpMsg = "boludo - AI personal assistant\n" +
 	"\n" +
 	"Usage:\n" +
-	"   boludo <CONFIG_ID> [PROMPT]\n" +
+	"   boludo <CONFIG_ID> [--server PATH] [PROMPT]\n" +
 	"   boludo [-h] [-v]\n" +
 	"\n" +
 	"Options:\n" +
-	"   -h            show this help message and exit\n" +
-	"   -v            show version information and exit\n" +
+	"   -h              show this help message and exit\n" +
+	"   -v              show version information and exit\n" +
+	"   --server PATH   path to LLM server executable\n" +
 	"\n" +
 	"boludo reads prompt from PROMPT, and then from standard input"
 
@@ -32,6 +33,7 @@ type ConfigArgs struct {
 	ConfigId    string
 	Prompt      string
 	ModelPath   string
+	ServerPath  string
 	ShowHelp    bool
 	ShowVersion bool
 }
@@ -55,6 +57,7 @@ func ParseArgs(cliArgs []string) (ConfigArgs, error) {
 	f.SetOutput(io.Discard)
 	f.BoolVar(&conf.ShowHelp, "h", false, "")
 	f.BoolVar(&conf.ShowVersion, "v", false, "")
+	f.StringVar(&conf.ServerPath, "server", "", "")
 	if err := f.Parse(cliArgs); err != nil {
 		return ConfigArgs{}, fmt.Errorf("%w. See 'boludo -h' for help", err)
 	}
