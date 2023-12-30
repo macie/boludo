@@ -106,6 +106,9 @@ func (s *Server) Start(ctx context.Context, modelPath string) error {
 	// wait for server to start. Check frequency is limited
 	i := 1
 	for {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if ok := s.Ping(); ok {
 			break
 		}

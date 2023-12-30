@@ -5,11 +5,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
 	"io/fs"
+	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/macie/boludo/llama"
@@ -18,21 +21,37 @@ import (
 const helpMsg = "boludo - AI personal assistant\n" +
 	"\n" +
 	"Usage:\n" +
-	"   boludo <CONFIG_ID> [--server PATH] [PROMPT]\n" +
+	"   boludo <CONFIG_ID> [--server PATH] [-t <timeout>] [PROMPT]\n" +
 	"   boludo [-h] [-v]\n" +
 	"\n" +
 	"Options:\n" +
-	"   -h              show this help message and exit\n" +
-	"   -v              show version information and exit\n" +
+	"   -t <timeout>    timeout after which the program exits (default: 0).\n" +
+	"                   Valid time units: ns, us, ms, s, m, h\n" +
 	"   --server PATH   path to LLM server executable\n" +
 	"   --verbose       show more verbose debug output\n" +
+	"   -h              show this help message and exit\n" +
+	"   -v              show version information and exit\n" +
 	"\n" +
 	"boludo reads prompt from PROMPT, and then from standard input"
+
+// NewAppContext returns a cancellable context which is:
+// - cancelled when the interrupt signal is received
+// - cancelled after the timeout (if any).
+func NewAppContext(config AppConfig) (context.Context, context.CancelFunc) {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+
+	if config.Timeout != 0 {
+		return context.WithTimeout(ctx, config.Timeout)
+	}
+
+	return ctx, cancel
+}
 
 // ConfigArgs contains configuration options for the program provided by the user.
 type ConfigArgs struct {
 	ConfigId    string
 	Prompt      string
+	Timeout     time.Duration
 	ModelPath   string
 	ServerPath  string
 	ShowHelp    bool
@@ -59,6 +78,7 @@ func ParseArgs(cliArgs []string) (ConfigArgs, error) {
 	f.SetOutput(io.Discard)
 	f.BoolVar(&conf.ShowHelp, "h", false, "")
 	f.BoolVar(&conf.ShowVersion, "v", false, "")
+	f.DurationVar(&conf.Timeout, "t", 0, "")
 	f.BoolVar(&conf.ShowVerbose, "verbose", false, "")
 	f.StringVar(&conf.ServerPath, "server", "", "")
 	if err := f.Parse(cliArgs); err != nil {
