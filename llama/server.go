@@ -8,13 +8,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/exec"
 	"path"
 	"runtime"
 	"time"
+
+	"github.com/macie/boludo"
 )
 
 // Server represents LLM server.
@@ -35,7 +37,7 @@ type Server struct {
 	// Logger specifies an optional logger for underlying server errors and
 	// debug messages.
 	// If nil, logging is done to stderr.
-	Logger *log.Logger
+	Logger *slog.Logger
 }
 
 // Start starts LLM server.
@@ -66,7 +68,7 @@ func (s *Server) Start(ctx context.Context, modelPath string) error {
 	}
 
 	if s.Logger == nil {
-		s.Logger = log.New(os.Stderr, "[llm-server] ", 0)
+		s.Logger = slog.New(boludo.UnstructuredHandler{Prefix: "[llm-server]", Level: slog.LevelInfo})
 	}
 
 	if s.Addr == "" {
@@ -79,7 +81,7 @@ func (s *Server) Start(ctx context.Context, modelPath string) error {
 
 	if s.Cmd == nil {
 		cmdLogger := CmdLogger{
-			ErrorLog: s.Logger,
+			Log: s.Logger,
 		}
 		s.Cmd = exec.CommandContext(ctx,
 			s.Path,
@@ -89,8 +91,8 @@ func (s *Server) Start(ctx context.Context, modelPath string) error {
 			"--threads", fmt.Sprint(runtime.NumCPU()),
 			"--ctx-size", fmt.Sprint(2048),
 		)
-		s.Cmd.Stdout = cmdLogger
-		s.Cmd.Stderr = cmdLogger
+		s.Cmd.Stdout = &cmdLogger
+		s.Cmd.Stderr = &cmdLogger
 	}
 
 	if err := s.Cmd.Start(); err != nil {

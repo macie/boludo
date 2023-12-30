@@ -7,23 +7,25 @@ package llama
 import (
 	"bufio"
 	"bytes"
-	"log"
+	"log/slog"
+	"regexp"
+	"strings"
 )
 
-// CmdLogger is a log.Logger wrapper for exec.Cmd output.
+// CmdLogger is a slog.Logger wrapper for exec.Cmd output.
 type CmdLogger struct {
 	// Log specifies an optional logger for exec.Cmd output
-	// If nil, logging is done via the log package's standard logger.
-	ErrorLog *log.Logger
+	// If nil, logging is done via the slog package's standard logger.
+	Log *slog.Logger
 }
 
 // Write implements io.Writer.
-func (c CmdLogger) Write(p []byte) (n int, err error) {
-	if c.ErrorLog == nil {
-		c.ErrorLog = log.Default()
+func (c *CmdLogger) Write(p []byte) (n int, err error) {
+	if c.Log == nil {
+		c.Log = slog.Default()
 	}
 
-	progressbarPattern := regexp.MustCompile(`^\.*$`)
+	progressbarPattern := regexp.MustCompile(`^\.+$`)
 	scanner := bufio.NewScanner(bytes.NewReader(p))
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -33,7 +35,15 @@ func (c CmdLogger) Write(p []byte) (n int, err error) {
 		if strings.HasPrefix(line, ".") && progressbarPattern.MatchString(line) {
 			continue
 		}
-		c.ErrorLog.Println(line)
+
+		if strings.Contains(line, `"level":"ERROR"`) {
+			c.Log.Error(line)
+		} else if strings.Contains(line, `"level":"WARNING"`) {
+			c.Log.Warn(line)
+		} else {
+			// "level":"INFO" and unstructured lines (see: server.cpp)
+			c.Log.Info(line)
+		}
 	}
 	return len(p), nil
 }

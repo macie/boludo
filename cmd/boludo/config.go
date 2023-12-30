@@ -25,6 +25,7 @@ const helpMsg = "boludo - AI personal assistant\n" +
 	"   -h              show this help message and exit\n" +
 	"   -v              show version information and exit\n" +
 	"   --server PATH   path to LLM server executable\n" +
+	"   --verbose       show more verbose debug output\n" +
 	"\n" +
 	"boludo reads prompt from PROMPT, and then from standard input"
 
@@ -36,6 +37,7 @@ type ConfigArgs struct {
 	ServerPath  string
 	ShowHelp    bool
 	ShowVersion bool
+	ShowVerbose bool
 }
 
 // ParseArgs creates a new ConfigArgs from the given command line arguments.
@@ -57,6 +59,7 @@ func ParseArgs(cliArgs []string) (ConfigArgs, error) {
 	f.SetOutput(io.Discard)
 	f.BoolVar(&conf.ShowHelp, "h", false, "")
 	f.BoolVar(&conf.ShowVersion, "v", false, "")
+	f.BoolVar(&conf.ShowVerbose, "verbose", false, "")
 	f.StringVar(&conf.ServerPath, "server", "", "")
 	if err := f.Parse(cliArgs); err != nil {
 		return ConfigArgs{}, fmt.Errorf("%w. See 'boludo -h' for help", err)

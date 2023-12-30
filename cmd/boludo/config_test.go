@@ -25,6 +25,8 @@ func TestParseArgs(t *testing.T) {
 		{[]string{"-v"}, ConfigArgs{ShowVersion: true}},
 		{[]string{"edit"}, ConfigArgs{ConfigId: "edit"}},
 		{[]string{"edit", "-h"}, ConfigArgs{ConfigId: "edit", ShowHelp: true}},
+		{[]string{"assistant", "--verbose"}, ConfigArgs{ConfigId: "assistant", ShowVerbose: true}},
+		{[]string{"assistant", "--server", "./llm-server"}, ConfigArgs{ConfigId: "assistant", ServerPath: "./llm-server"}},
 		{[]string{"chat", "How are you?"}, ConfigArgs{ConfigId: "chat", Prompt: "How are you?"}},
 		{[]string{"chat", "-v", "How are you?"}, ConfigArgs{ConfigId: "chat", Prompt: "How are you?", ShowVersion: true}},
 	}
@@ -50,6 +52,7 @@ func TestParseArgs_Invalid(t *testing.T) {
 		{[]string{}},
 		{[]string{"-x"}},
 		{[]string{"edit", "--yyy"}},
+		{[]string{"assistant", "--server"}},
 		{[]string{"chat", "prompt", "prompt2"}},
 	}
 	want := ConfigArgs{}
