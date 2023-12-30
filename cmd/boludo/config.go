@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"os/signal"
 	"strings"
 	"time"
@@ -162,7 +163,7 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 		for k, v := range definedConfigs[configId].(map[string]interface{}) {
 			switch k {
 			case "model":
-				defaultSpec.Model = v.(string)
+				defaultSpec.Model = os.ExpandEnv(v.(string))
 			case "creativity":
 				defaultSpec.Creativity = (float32)(v.(float64))
 			case "cutoff":
