@@ -105,12 +105,12 @@ func TestParseFile(t *testing.T) {
 				Cutoff:     0.5,
 			},
 		}},
-		{"[edit]\nmodel = \"model.gguf\"\ncutoff = 0.5\n[unknown]", ConfigFile{
+		{"[edit]\nmodel = \"model.gguf\"\ninitial-prompt = 'Reword:'\n[unknown]", ConfigFile{
 			"edit": ModelSpec{
-				Model:      "model.gguf",
-				Format:     "",
-				Creativity: 1.0,
-				Cutoff:     0.5,
+				Model:         "model.gguf",
+				Format:        "",
+				InitialPrompt: "Reword:",
+				Creativity:    1.0,
 			},
 			"unknown": ModelSpec{
 				Model:      "",

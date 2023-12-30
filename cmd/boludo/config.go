@@ -95,10 +95,11 @@ type ConfigFile map[string]ModelSpec
 
 // ModelSpec represents a model specification in the configuration file.
 type ModelSpec struct {
-	Model      string
-	Format     string
-	Creativity float32
-	Cutoff     float32
+	Model         string
+	InitialPrompt string
+	Format        string
+	Creativity    float32
+	Cutoff        float32
 }
 
 // ParseFile reads the TOML configuration file and returns a ConfigFile.
@@ -132,10 +133,11 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 	definedConfigs, _ := data.(map[string]interface{})
 	for configId := range definedConfigs {
 		defaultSpec := ModelSpec{
-			Model:      "",
-			Format:     llama.DefaultOptions.Format,
-			Creativity: llama.DefaultOptions.Temp,
-			Cutoff:     llama.DefaultOptions.MinP,
+			Model:         "",
+			InitialPrompt: "",
+			Format:        llama.DefaultOptions.Format,
+			Creativity:    llama.DefaultOptions.Temp,
+			Cutoff:        llama.DefaultOptions.MinP,
 		}
 		for k, v := range definedConfigs[configId].(map[string]interface{}) {
 			switch k {
@@ -145,6 +147,8 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 				defaultSpec.Creativity = (float32)(v.(float64))
 			case "cutoff":
 				defaultSpec.Cutoff = (float32)(v.(float64))
+			case "initial-prompt":
+				defaultSpec.InitialPrompt = v.(string)
 			}
 		}
 		(*c)[configId] = defaultSpec
