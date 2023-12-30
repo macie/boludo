@@ -95,12 +95,14 @@ func (s *Server) Start(ctx context.Context, modelPath string) error {
 		s.Cmd.Stderr = &cmdLogger
 	}
 
-	if err := s.Cmd.Start(); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("cannot start a LLM server: command '%s' not found in directory '%s': %w", path.Base(s.Cmd.Path), path.Dir(s.Cmd.Path), os.ErrNotExist)
-		}
-
-		return fmt.Errorf("cannot start a LLM server: %w", err)
+	cmdErr := s.Cmd.Start()
+	switch {
+	case cmdErr == nil:
+		// no error
+	case errors.Is(cmdErr, os.ErrNotExist):
+		return fmt.Errorf("cannot start a LLM server: command '%s' not found in directory '%s': %w", path.Base(s.Cmd.Path), path.Dir(s.Cmd.Path), cmdErr)
+	default:
+		return fmt.Errorf("cannot start a LLM server: %w", cmdErr)
 	}
 
 	// wait for server to start. Check frequency is limited
