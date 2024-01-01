@@ -56,7 +56,7 @@ func (s *Server) Start(ctx context.Context, modelPath string) error {
 		return fmt.Errorf("cannot start a LLM server: server not found at '%s': %w", s.Path, errServer)
 	}
 	if f.IsDir() {
-		return fmt.Errorf("cannot start a LLM server: server path '%s' is a directory", modelPath)
+		return fmt.Errorf("cannot start a LLM server: server path '%s' is a directory", s.Path)
 	}
 
 	f, err := os.Stat(modelPath)
@@ -68,7 +68,7 @@ func (s *Server) Start(ctx context.Context, modelPath string) error {
 	}
 
 	if s.Logger == nil {
-		s.Logger = slog.New(boludo.UnstructuredHandler{Prefix: "[llm-server]", Level: slog.LevelInfo})
+		s.Logger = slog.New(boludo.UnstructuredHandler{Prefix: "[llm-server]", Level: slog.LevelDebug})
 	}
 
 	if s.Addr == "" {
@@ -109,7 +109,7 @@ func (s *Server) Start(ctx context.Context, modelPath string) error {
 	i := 1
 	for {
 		if ctx.Err() != nil {
-			return ctx.Err()
+			return fmt.Errorf("cannot start a LLM server: %w", ctx.Err())
 		}
 		if ok := s.Ping(); ok {
 			break
