@@ -6,9 +6,9 @@ package boludo
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"log/slog"
-	"strings"
+	"os"
 )
 
 // UnstructuredHandler is a slog.Handler that writes all log records to stderr
@@ -19,6 +19,10 @@ type UnstructuredHandler struct {
 
 	// Level specifies a minimum level for log records.
 	Level slog.Level
+
+	// Output specifies a destination for log records.
+	// If nil, os.Stderr is used.
+	Output io.Writer
 }
 
 // WithAttrs implements slog.Handler.
@@ -36,23 +40,24 @@ func (u UnstructuredHandler) Enabled(_ context.Context, l slog.Level) bool {
 
 // Handle writes log records to stderr.
 func (u UnstructuredHandler) Handle(_ context.Context, r slog.Record) error {
-	line := strings.Builder{}
+	output := u.Output
+	if output == nil {
+		output = os.Stderr
+	}
 
 	if u.Prefix != "" {
-		line.WriteString(u.Prefix)
-		line.WriteString(" ")
+		output.Write([]byte(u.Prefix))
+		output.Write([]byte{' '})
 	}
-	line.WriteString(r.Level.String())
-	line.WriteString(" ")
-	line.WriteString(r.Message)
-
+	output.Write([]byte(r.Level.String()))
+	output.Write([]byte{' '})
+	output.Write([]byte(r.Message))
 	r.Attrs(func(a slog.Attr) bool {
-		line.WriteString(" ")
-		line.WriteString(a.String())
+		output.Write([]byte{' '})
+		output.Write([]byte(a.String()))
 		return true
 	})
-
-	fmt.Println(line.String())
+	output.Write([]byte{'\n'})
 
 	return nil
 }
