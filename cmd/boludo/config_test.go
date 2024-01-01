@@ -77,7 +77,7 @@ func TestConfigArgsOptions(t *testing.T) {
 		want llama.Options
 	}{
 		{ConfigArgs{}, llama.DefaultOptions},
-		{ConfigArgs{ModelPath: "model.gguf"}, llama.Options{ModelPath: "model.gguf", Format: "", Temp: 1, MinP: 0}},
+		{ConfigArgs{ModelPath: "model.gguf"}, llama.Options{ModelPath: "model.gguf", Temp: 1, MinP: 0}},
 	}
 	for _, tc := range testcases {
 		tc := tc
@@ -177,7 +177,7 @@ func TestConfigFileOptions(t *testing.T) {
 		file     ConfigFile
 		want     llama.Options
 	}{
-		{"chat", ConfigFile{"edit": ModelSpec{Model: "editmodel.gguf"}, "chat": ModelSpec{Model: "chatmodel.gguf", Format: "", Creativity: 0.3, Cutoff: 2}}, llama.Options{ModelPath: "chatmodel.gguf", Format: "", Temp: 0.3, MinP: 2}},
+		{"chat", ConfigFile{"edit": ModelSpec{Model: "editmodel.gguf"}, "chat": ModelSpec{Model: "chatmodel.gguf", Format: "", Creativity: 0.3, Cutoff: 2}}, llama.Options{ModelPath: "chatmodel.gguf", Temp: 0.3, MinP: 2}},
 		{"invalid", ConfigFile{}, llama.DefaultOptions},
 	}
 	for _, tc := range testcases {

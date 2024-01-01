@@ -33,8 +33,8 @@ func Serve(ctx context.Context, modelPath string) error {
 }
 
 // Complete returns a channel with completion results for given string.
-func Complete(ctx context.Context, s string) (chan string, error) {
-	return defaultClient.Complete(ctx, s)
+func Complete(ctx context.Context, p Prompt) (chan string, error) {
+	return defaultClient.Complete(ctx, p)
 }
 
 // Close releases all resources used by LLM server.
@@ -45,7 +45,6 @@ func Close() error {
 // Options represent parameters for interacting with LLaMA model.
 type Options struct {
 	ModelPath string
-	Format    string
 	Temp      float32
 	MinP      float32
 	Seed      uint

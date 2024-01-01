@@ -49,12 +49,12 @@ type Client struct {
 }
 
 // Complete returns a channel with completion results for given string.
-func (c *Client) Complete(ctx context.Context, s string) (chan string, error) {
+func (c *Client) Complete(ctx context.Context, p Prompt) (chan string, error) {
 	if c.Options == nil {
 		c.Options = &DefaultOptions
 	}
 	req := completionRequest{
-		Prompt:          s,
+		Prompt:          p.String(),
 		Temp:            c.Options.Temp,
 		TopK:            40,
 		MinP:            c.Options.MinP,

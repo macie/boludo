@@ -48,7 +48,7 @@ func Version() string {
 type AppConfig struct {
 	Options     llama.Options
 	ServerPath  string
-	Prompt      string
+	Prompt      llama.Prompt
 	Timeout     time.Duration
 	Verbose     bool
 	ExitMessage string
@@ -91,10 +91,13 @@ func NewAppConfig(cliArgs []string) (AppConfig, error) {
 	options.Update(configFile.Options(configArgs.ConfigId))
 	options.Update(configArgs.Options())
 
-	prompt := configArgs.Prompt
-	if spec, ok := configFile[configArgs.ConfigId]; ok {
-		prompt = fmt.Sprintf("%s %s", spec.InitialPrompt, configArgs.Prompt)
+	prompt := configFile.Prompt(configArgs.ConfigId)
+	initialPrompt := configFile.InitialPrompt(configArgs.ConfigId)
+	userPrompt := configArgs.Prompt
+	if initialPrompt != "" {
+		userPrompt = fmt.Sprintf("%s %s", initialPrompt, userPrompt)
 	}
+	prompt.Add(userPrompt)
 
 	return AppConfig{
 		Prompt:     prompt,
@@ -226,7 +229,7 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 		defaultSpec := ModelSpec{
 			Model:         "",
 			InitialPrompt: "",
-			Format:        llama.DefaultOptions.Format,
+			Format:        "",
 			Creativity:    llama.DefaultOptions.Temp,
 			Cutoff:        llama.DefaultOptions.MinP,
 		}
@@ -238,6 +241,8 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 				defaultSpec.Creativity = (float32)(v.(float64))
 			case "cutoff":
 				defaultSpec.Cutoff = (float32)(v.(float64))
+			case "format":
+				defaultSpec.Format = v.(string)
 			case "initial-prompt":
 				defaultSpec.InitialPrompt = v.(string)
 			}
@@ -255,11 +260,28 @@ func (c *ConfigFile) Options(configId string) llama.Options {
 	if spec, ok := (*c)[configId]; ok {
 		return llama.Options{
 			ModelPath: spec.Model,
-			Format:    spec.Format,
 			Temp:      spec.Creativity,
 			MinP:      spec.Cutoff,
 		}
 	}
 
 	return llama.DefaultOptions
+}
+
+// Prompt returns the llama.Prompt based on the ConfigFile.
+func (c *ConfigFile) Prompt(configId string) llama.Prompt {
+	if spec, ok := (*c)[configId]; ok {
+		return llama.Prompt{
+			Format: spec.Format,
+		}
+	}
+	return llama.Prompt{}
+}
+
+// InitialPrompt returns the initial prompt specified in the ConfigFile.
+func (c *ConfigFile) InitialPrompt(configId string) string {
+	if spec, ok := (*c)[configId]; ok {
+		return spec.InitialPrompt
+	}
+	return ""
 }

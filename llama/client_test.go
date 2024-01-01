@@ -18,8 +18,11 @@ func TestComplete(t *testing.T) {
 	}
 	defer server.Close()
 
+	prompt := Prompt{}
+	prompt.Add("Once upon a time")
+
 	client := Client{}
-	c, err := client.Complete(context.TODO(), "Once upon a time")
+	c, err := client.Complete(context.TODO(), prompt)
 	if err != nil {
 		t.Fatalf("client.Complete() returns error: %v", err)
 	}
