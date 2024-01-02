@@ -11,7 +11,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
+
+	"github.com/macie/boludo"
 )
 
 // completionRequest represents completion request to LLM server.
@@ -46,6 +49,9 @@ type Client struct {
 	// Options specifies options for underlying LLM server.
 	// If nil, DefaultOptions are used.
 	Options *Options
+
+	// Logger specifies logger for the client.
+	Logger *slog.Logger
 }
 
 // Complete returns a channel with completion results for given string.
@@ -73,6 +79,9 @@ func (c *Client) Complete(ctx context.Context, p Prompt) (chan string, error) {
 
 // infer is a low-level function for sending completion requests to the LLM server.
 func (c *Client) infer(ctx context.Context, req completionRequest) (chan string, error) {
+	if c.Logger == nil {
+		c.Logger = slog.New(boludo.UnstructuredHandler{Prefix: "[llm-client]", Level: slog.LevelInfo})
+	}
 	if c.Addr == "" {
 		c.Addr = "localhost:24114"
 	}
@@ -87,6 +96,7 @@ func (c *Client) infer(ctx context.Context, req completionRequest) (chan string,
 	if err != nil {
 		return nil, fmt.Errorf("completion request cannot be created: %w", err)
 	}
+	c.Logger.Info("completion request", slog.String("url", url), slog.String("body", string(reqBody)))
 	resp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("completion request cannot be sent: %w", err)

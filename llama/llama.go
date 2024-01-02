@@ -20,10 +20,10 @@ var (
 	}
 )
 
-// SetDefault sets default Server.
-func SetDefault(server Server) {
+// SetDefault sets default Client and Server.
+func SetDefault(server Server, client Client) {
 	defaultServer = server
-	defaultClient = Client{Addr: defaultServer.Addr}
+	defaultClient = client
 }
 
 // Serve starts LLM server and returns error if it fails. It is the caller's

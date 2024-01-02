@@ -40,7 +40,11 @@ func main() {
 		Path:   config.ServerPath,
 		Logger: slog.New(boludo.UnstructuredHandler{Prefix: "[llm-server]", Level: defaultLogHandler.Level}),
 	}
-	llama.SetDefault(server)
+	client := llama.Client{
+		Options: &config.Options,
+		Logger:  slog.New(boludo.UnstructuredHandler{Prefix: "[llm-client]", Level: defaultLogHandler.Level}),
+	}
+	llama.SetDefault(server, client)
 
 	if err := llama.Serve(ctx, config.Options.ModelPath); err != nil {
 		slog.Error(fmt.Sprint(err))
@@ -53,8 +57,6 @@ func main() {
 		slog.Error(fmt.Sprint(err))
 		os.Exit(1)
 	}
-
-	fmt.Fprint(os.Stdout, config.Prompt)
 
 	for token := range output {
 		fmt.Fprint(os.Stdout, token)
