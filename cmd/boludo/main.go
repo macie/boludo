@@ -5,10 +5,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/macie/boludo"
 	"github.com/macie/boludo/llama"
@@ -51,6 +53,21 @@ func main() {
 		os.Exit(1)
 	}
 	defer llama.Close()
+
+	userPrompt := strings.Builder{}
+	userPrompt.WriteString(config.UserPrompt)
+
+	input, err := os.Stdin.Stat()
+	if err == nil && (input.Mode()&os.ModeCharDevice) == 0 {
+		// something is redirected to stdin
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			userPrompt.Write(scanner.Bytes())
+			userPrompt.WriteRune('\n')
+		}
+	}
+
+	config.Prompt.Add(strings.Trim(userPrompt.String(), "\n"))
 
 	output, err := llama.Complete(ctx, config.Prompt)
 	if err != nil {

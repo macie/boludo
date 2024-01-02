@@ -49,6 +49,7 @@ type AppConfig struct {
 	Options     llama.Options
 	ServerPath  string
 	Prompt      llama.Prompt
+	UserPrompt  string
 	Timeout     time.Duration
 	Verbose     bool
 	ExitMessage string
@@ -97,10 +98,10 @@ func NewAppConfig(cliArgs []string) (AppConfig, error) {
 	if initialPrompt != "" {
 		userPrompt = fmt.Sprintf("%s %s", initialPrompt, userPrompt)
 	}
-	prompt.Add(userPrompt)
 
 	return AppConfig{
 		Prompt:     prompt,
+		UserPrompt: userPrompt,
 		Options:    options,
 		ServerPath: configArgs.ServerPath,
 		Timeout:    configArgs.Timeout,
