@@ -24,7 +24,7 @@ var promptFormats = map[string]func(Prompt) string{
 			userPrompt = "<|im_start|>user\n<|im_end|>\n"
 		}
 
-		return fmt.Sprintf("%s%s<|im_start|>assistant", systemPrompt, userPrompt)
+		return fmt.Sprintf("%s%s<|im_start|>assistant\n", systemPrompt, userPrompt)
 	},
 }
 
