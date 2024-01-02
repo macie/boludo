@@ -26,6 +26,21 @@ var promptFormats = map[string]func(Prompt) string{
 
 		return fmt.Sprintf("%s%s<|im_start|>assistant\n", systemPrompt, userPrompt)
 	},
+	"openchat": func(p Prompt) string {
+		systemPrompt := p.System
+		if systemPrompt != "" {
+			systemPrompt += "<|end_of_turn|>"
+		}
+		userPrompt := ""
+		for i := range p.userPrompt {
+			userPrompt += fmt.Sprintf("GPT4 Correct User: %s<|end_of_turn|>", p.userPrompt[i])
+		}
+		if userPrompt == "" {
+			userPrompt = "GPT4 Correct User: <|end_of_turn|>"
+		}
+
+		return fmt.Sprintf("%s%sGPT4 Correct Assistant: ", systemPrompt, userPrompt)
+	},
 }
 
 // Prompt represents prompt for the LLM.

@@ -16,6 +16,8 @@ func TestPromptString(t *testing.T) {
 	}{
 		{Prompt{Format: "chatml"}, "<|im_start|>system\n<|im_end|>\n<|im_start|>user\n<|im_end|>\n<|im_start|>assistant\n"},
 		{Prompt{Format: "ChatML", System: "You are a helpful assistant."}, "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n<|im_end|>\n<|im_start|>assistant\n"},
+		{Prompt{Format: "openchat"}, "GPT4 Correct User: <|end_of_turn|>GPT4 Correct Assistant: "},
+		{Prompt{Format: "openchat", System: "You are a helpful assistant."}, "You are a helpful assistant.<|end_of_turn|>GPT4 Correct User: <|end_of_turn|>GPT4 Correct Assistant: "},
 	}
 
 	for _, tc := range testcases {
