@@ -28,6 +28,8 @@ type completionRequest struct {
 	TopP            float32 `json:"top_p"`
 	Seed            int     `json:"seed"`
 	WithoutNewlines bool    `json:"penalize_nl"`
+	RepeatPenalty   float32 `json:"repeat_penalty"`
+	RepeatLastN     int     `json:"repeat_last_n"`
 	PredictNum      int     `json:"n_predict"`
 	Streaming       bool    `json:"stream"`
 }
@@ -61,12 +63,14 @@ func (c *Client) Complete(ctx context.Context, p Prompt) (chan string, error) {
 	}
 	req := completionRequest{
 		Prompt:          p.String(),
-		Temp:            c.Options.Temp,
-		TopK:            40,
-		MinP:            c.Options.MinP,
-		TopP:            0.0,
-		Seed:            -1,
-		PredictNum:      150,
+		Temp:            c.Options.Temp, // 1.0 means disable
+		TopK:            0,              // 0 means disable
+		MinP:            c.Options.MinP, // 0.0 means disable
+		TopP:            1.0,            // 1.0 means disable
+		Seed:            5489,           // -1 means random seed
+		PredictNum:      -1,             // -1 means infinite
+		RepeatPenalty:   1.0,            // 1.0 means disable
+		RepeatLastN:     0,              // 0 means disable
 		Streaming:       true,
 		WithoutNewlines: false,
 	}
