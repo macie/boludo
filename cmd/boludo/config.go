@@ -191,6 +191,7 @@ type ConfigFile map[string]ModelSpec
 // ModelSpec represents a model specification in the configuration file.
 type ModelSpec struct {
 	Model         string
+	SystemPrompt  string
 	InitialPrompt string
 	Format        string
 	Creativity    float32
@@ -229,6 +230,7 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 	for configId := range definedConfigs {
 		defaultSpec := ModelSpec{
 			Model:         "",
+			SystemPrompt:  "",
 			InitialPrompt: "",
 			Format:        "",
 			Creativity:    llama.DefaultOptions.Temp,
@@ -244,6 +246,8 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 				defaultSpec.Cutoff = (float32)(v.(float64))
 			case "format":
 				defaultSpec.Format = v.(string)
+			case "system-prompt":
+				defaultSpec.SystemPrompt = v.(string)
 			case "initial-prompt":
 				defaultSpec.InitialPrompt = v.(string)
 			}
@@ -274,6 +278,7 @@ func (c *ConfigFile) Prompt(configId string) llama.Prompt {
 	if spec, ok := (*c)[configId]; ok {
 		return llama.Prompt{
 			Format: spec.Format,
+			System: spec.SystemPrompt,
 		}
 	}
 	return llama.Prompt{}

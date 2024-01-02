@@ -119,6 +119,15 @@ func TestParseFile(t *testing.T) {
 				Cutoff:     0.0,
 			},
 		}},
+		{"[assistant]\nmodel = \"model.gguf\"\ninitial-prompt = 'Reword:'\nsystem-prompt = 'You are an assistant.'", ConfigFile{
+			"assistant": ModelSpec{
+				Model:         "model.gguf",
+				Format:        "",
+				InitialPrompt: "Reword:",
+				SystemPrompt:  "You are an assistant.",
+				Creativity:    1.0,
+			},
+		}},
 	}
 	for _, tc := range testcases {
 		tc := tc
