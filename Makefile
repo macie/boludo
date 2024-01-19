@@ -1,59 +1,77 @@
 .POSIX:
 .SUFFIXES:
 
-CLI_DIR = ./cmd/boludo
 
-# MAIN TARGETS
+#
+# PUBLIC MACROS
+#
+
+CLI     = boludo
+DESTDIR = ./dist
+GO      = go
+GOFLAGS = 
+LDFLAGS = -ldflags "-s -w -X main.AppVersion=$$VERSION"
+
+
+#
+# INTERNAL MACROS
+#
+
+CLI_DIR  = ./cmd/boludo
+
+
+#
+# DEVELOPMENT TASKS
+#
 
 all: install-dependencies
 
 clean:
-	@echo '# Delete binaries: rm -rf ./dist' >&2
-	@rm -rf ./dist
+	@echo '# Delete bulid directory' >&2
+	rm -rf $(DESTDIR)
 
 info:
 	@printf '# OS info: '
 	@uname -rsv;
 	@echo '# Development dependencies:'
-	@go version || true
-	@reuse --version || true
+	@$(GO) version || true
 	@echo '# Go environment variables:'
-	@go env || true
+	@$(GO) env || true
 
 check:
-	@echo '# Static analysis: go vet' >&2
-	@go vet -C cmd/*
+	@echo '# Static analysis' >&2
+	$(GO) vet -C $(CLI_DIR)
 	
 test:
-	@echo '# Unit tests: go test .' >&2
-	@go test .
+	@echo '# Unit tests' >&2
+	$(GO) test .
 
 build:
-	@echo '# Create release binary: ./dist/boludo' >&2
+	@echo '# Build CLI executable: $(DESTDIR)/$(CLI)' >&2
 	@CURRENT_VER_TAG="$$(git tag --points-at HEAD | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)"; \
 		PREV_VER_TAG="$$(git tag | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)"; \
 		CURRENT_COMMIT_TAG="$$(TZ=UTC git --no-pager show --quiet --abbrev=12 --date='format-local:%Y%m%d%H%M%S' --format='%cd-%h')"; \
 		PSEUDOVERSION="$${PREV_VER_TAG:-0001.01}-$$CURRENT_COMMIT_TAG"; \
 		VERSION="$${CURRENT_VER_TAG:-$$PSEUDOVERSION}"; \
-		go build -C $(CLI_DIR) -ldflags="-s -w -X main.AppVersion=$$VERSION" -o '../../dist/boludo'; \
+		$(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o '../../$(DESTDIR)/$(CLI)'
 
 dist:
-	@echo '# Create release binaries in ./dist' >&2
+	@echo '# Create CLI executables in $(DESTDIR)' >&2
 	@CURRENT_VER_TAG="$$(git tag --points-at HEAD | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)"; \
 		PREV_VER_TAG="$$(git tag | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)"; \
 		CURRENT_COMMIT_TAG="$$(TZ=UTC git --no-pager show --quiet --abbrev=12 --date='format-local:%Y%m%d%H%M%S' --format='%cd-%h')"; \
 		PSEUDOVERSION="$${PREV_VER_TAG:-0001.01}-$$CURRENT_COMMIT_TAG"; \
 		VERSION="$${CURRENT_VER_TAG:-$$PSEUDOVERSION}"; \
-		GOOS=openbsd GOARCH=amd64 go build -C $(CLI_DIR) -ldflags="-s -w -X main.AppVersion=$$VERSION" -o '../../dist/boludo-openbsd_amd64'; \
-		GOOS=linux GOARCH=amd64 go build -C $(CLI_DIR) -ldflags="-s -w -X main.AppVersion=$$VERSION" -o '../../dist/boludo-linux_amd64'; \
-		GOOS=windows GOARCH=amd64 go build -C $(CLI_DIR) -ldflags="-s -w -X main.AppVersion=$$VERSION" -o '../../dist/boludo-windows_amd64.exe'; \
+		GOOS=openbsd GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-openbsd_amd64"; \
+		GOOS=linux GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-linux_amd64"; \
+		GOOS=windows GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-windows_amd64.exe"; \
 
-	@echo '# Create binaries checksum' >&2
-	@cd ./dist; sha256sum * >sha256sum.txt
+	@echo '# Create checksums' >&2
+	@cd $(DESTDIR); sha256sum * >sha256sum.txt
 
 install-dependencies:
-	@echo '# Install CLI dependencies:' >&2
-	# @go get -C cmd/ -v -x .
+	@echo '# Install CLI dependencies' >&2
+	@GOFLAGS='-v -x' $(GO) get -C $(CLI_DIR) $(GOFLAGS) .
 	@echo '# Build libllama.so'
 	cd ./external/llama.cpp; make server && cp server ../../llm-server
 
