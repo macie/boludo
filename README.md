@@ -10,12 +10,11 @@ Use `make` (GNU or BSD):
 
 - `make` - install dependencies
 - `make test` - runs test
-- `make check` - static code analysis & license checks
+- `make check` - static code analysis
 - `make build` - compile binaries from latest commit
 - `make dist` - compile binaries from latest commit for supported OSes
 - `make clean` - removes compilation artifacts
 - `make cli-release` - tag latest commit as a new release of CLI
-- `make module-release` - tag latest commit as a new release of Go module
 - `make info` - print system info (useful for debugging).
 
 ### Versioning
