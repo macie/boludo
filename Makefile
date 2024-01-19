@@ -10,14 +10,18 @@ CLI     = boludo
 DESTDIR = ./dist
 GO      = go
 GOFLAGS = 
-LDFLAGS = -ldflags "-s -w -X main.AppVersion=$$VERSION"
+LDFLAGS = -ldflags "-s -w -X main.AppVersion=$(CLI_VERSION)"
 
 
 #
 # INTERNAL MACROS
 #
 
-CLI_DIR  = ./cmd/boludo
+CLI_DIR             = ./cmd/boludo
+CLI_CURRENT_VER_TAG = $$(git tag --points-at HEAD | sed 's/^v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+CLI_LATEST_VERSION  = $$(git tag | sed 's/^v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+CLI_PSEUDOVERSION   = $$(VER="$(CLI_LATEST_VERSION)"; echo "$${VER:-0.0.0}")-$$(TZ=UTC git --no-pager show --quiet --abbrev=12 --date='format-local:%Y%m%d%H%M%S' --format='%cd-%h')
+CLI_VERSION         = $$(VER="$(CLI_CURRENT_VER_TAG)"; echo "$${VER:-$(CLI_PSEUDOVERSION)}")
 
 
 #
@@ -48,24 +52,13 @@ test:
 
 build:
 	@echo '# Build CLI executable: $(DESTDIR)/$(CLI)' >&2
-	@CURRENT_VER_TAG="$$(git tag --points-at HEAD | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)"; \
-		PREV_VER_TAG="$$(git tag | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)"; \
-		CURRENT_COMMIT_TAG="$$(TZ=UTC git --no-pager show --quiet --abbrev=12 --date='format-local:%Y%m%d%H%M%S' --format='%cd-%h')"; \
-		PSEUDOVERSION="$${PREV_VER_TAG:-0001.01}-$$CURRENT_COMMIT_TAG"; \
-		VERSION="$${CURRENT_VER_TAG:-$$PSEUDOVERSION}"; \
-		$(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o '../../$(DESTDIR)/$(CLI)'
+	$(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o '../../$(DESTDIR)/$(CLI)'
 
 dist:
 	@echo '# Create CLI executables in $(DESTDIR)' >&2
-	@CURRENT_VER_TAG="$$(git tag --points-at HEAD | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)"; \
-		PREV_VER_TAG="$$(git tag | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)"; \
-		CURRENT_COMMIT_TAG="$$(TZ=UTC git --no-pager show --quiet --abbrev=12 --date='format-local:%Y%m%d%H%M%S' --format='%cd-%h')"; \
-		PSEUDOVERSION="$${PREV_VER_TAG:-0001.01}-$$CURRENT_COMMIT_TAG"; \
-		VERSION="$${CURRENT_VER_TAG:-$$PSEUDOVERSION}"; \
-		GOOS=openbsd GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-openbsd_amd64"; \
-		GOOS=linux GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-linux_amd64"; \
-		GOOS=windows GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-windows_amd64.exe"; \
-
+	GOOS=openbsd GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-openbsd_amd64"
+	GOOS=linux GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-linux_amd64"
+	GOOS=windows GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-windows_amd64.exe"
 	@echo '# Create checksums' >&2
 	@cd $(DESTDIR); sha256sum * >sha256sum.txt
 
@@ -79,8 +72,7 @@ cli-release: check test
 	@echo '# Update local branch' >&2
 	@git pull --rebase
 	@echo '# Create new CLI release tag' >&2
-	@PREV_VER_TAG=$$(git tag | grep "^cli" | sed 's/^cli\/v//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1); \
-		printf 'Choose new version number for CLI (calver; >%s): ' "$${PREV_VER_TAG:-2023.11}"
-	@read -r VERSION; \
-		git tag "cli/v$$VERSION"; \
+	@VER="$(CLI_LATEST_VERSION)"; printf 'Choose new version number (calver; >%s): ' "$${VER:-2023.11}"
+	@read -r NEW_VERSION; \
+		git tag "cli/v$$NEW_VERSION"; \
 		git push --tags
