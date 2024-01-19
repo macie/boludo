@@ -1,3 +1,13 @@
+# This Makefile intended to be POSIX-compliant (2018 edition with .PHONY target).
+#
+# .PHONY targets are used by:
+#  - task definintions
+#  - compilation of Go code (force usage of `go build` to changes detection).
+#
+# More info:
+#  - docs: <https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html>
+#  - .PHONY: <https://www.austingroupbugs.net/view.php?id=523>
+#
 .POSIX:
 .SUFFIXES:
 
@@ -28,12 +38,15 @@ CLI_VERSION         = $$(VER="$(CLI_CURRENT_VER_TAG)"; echo "$${VER:-$(CLI_PSEUD
 # DEVELOPMENT TASKS
 #
 
+.PHONY: all
 all: install-dependencies
 
+.PHONY: clean
 clean:
 	@echo '# Delete bulid directory' >&2
 	rm -rf $(DESTDIR)
 
+.PHONY: info
 info:
 	@printf '# OS info: '
 	@uname -rsv;
@@ -42,18 +55,22 @@ info:
 	@echo '# Go environment variables:'
 	@$(GO) env || true
 
+.PHONY: check
 check:
 	@echo '# Static analysis' >&2
 	$(GO) vet -C $(CLI_DIR)
 	
+.PHONY: test
 test:
 	@echo '# Unit tests' >&2
 	$(GO) test .
 
+.PHONY: build
 build:
 	@echo '# Build CLI executable: $(DESTDIR)/$(CLI)' >&2
 	$(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o '../../$(DESTDIR)/$(CLI)'
 
+.PHONY: dist
 dist:
 	@echo '# Create CLI executables in $(DESTDIR)' >&2
 	GOOS=openbsd GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-openbsd_amd64"
@@ -62,12 +79,14 @@ dist:
 	@echo '# Create checksums' >&2
 	@cd $(DESTDIR); sha256sum * >sha256sum.txt
 
+.PHONY: install-dependencies
 install-dependencies:
 	@echo '# Install CLI dependencies' >&2
 	@GOFLAGS='-v -x' $(GO) get -C $(CLI_DIR) $(GOFLAGS) .
 	@echo '# Build libllama.so'
 	cd ./external/llama.cpp; make server && cp server ../../llm-server
 
+.PHONY: cli-release
 cli-release: check test
 	@echo '# Update local branch' >&2
 	@git pull --rebase
