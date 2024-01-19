@@ -101,12 +101,12 @@ func TestParseFile(t *testing.T) {
 				Cutoff:     0.5,
 			},
 		}},
-		{"[edit]\nmodel = \"model.gguf\"\ninitial-prompt = 'Reword:'\n[unknown]", ConfigFile{
+		{"[edit]\nmodel = \"model.gguf\"\nprompt-prefix = 'Reword:'\n[unknown]", ConfigFile{
 			"edit": ModelSpec{
-				Model:         "model.gguf",
-				Format:        "",
-				InitialPrompt: "Reword:",
-				Creativity:    1.0,
+				Model:        "model.gguf",
+				Format:       "",
+				PromptPrefix: "Reword:",
+				Creativity:   1.0,
 			},
 			"unknown": ModelSpec{
 				Model:      "",
@@ -115,13 +115,13 @@ func TestParseFile(t *testing.T) {
 				Cutoff:     0.0,
 			},
 		}},
-		{"[assistant]\nmodel = \"model.gguf\"\ninitial-prompt = 'Reword:'\nsystem-prompt = 'You are an assistant.'", ConfigFile{
+		{"[assistant]\nmodel = \"model.gguf\"\nprompt-prefix = 'Reword:'\nsystem-prompt = 'You are an assistant.'", ConfigFile{
 			"assistant": ModelSpec{
-				Model:         "model.gguf",
-				Format:        "",
-				InitialPrompt: "Reword:",
-				SystemPrompt:  "You are an assistant.",
-				Creativity:    1.0,
+				Model:        "model.gguf",
+				Format:       "",
+				PromptPrefix: "Reword:",
+				SystemPrompt: "You are an assistant.",
+				Creativity:   1.0,
 			},
 		}},
 	}

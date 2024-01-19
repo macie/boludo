@@ -89,10 +89,10 @@ func NewAppConfig(cliArgs []string) (AppConfig, error) {
 	options.Update(configArgs.Options())
 
 	prompt := configFile.Prompt(configArgs.ConfigId)
-	initialPrompt := configFile.InitialPrompt(configArgs.ConfigId)
+	promptPrefix := configFile.PromptPrefix(configArgs.ConfigId)
 	userPrompt := configArgs.Prompt
-	if initialPrompt != "" {
-		userPrompt = fmt.Sprintf("%s %s", initialPrompt, userPrompt)
+	if promptPrefix != "" {
+		userPrompt = fmt.Sprintf("%s %s", promptPrefix, userPrompt)
 	}
 
 	return AppConfig{
@@ -186,12 +186,12 @@ type ConfigFile map[string]ModelSpec
 
 // ModelSpec represents a model specification in the configuration file.
 type ModelSpec struct {
-	Model         string
-	SystemPrompt  string
-	InitialPrompt string
-	Format        string
-	Creativity    float32
-	Cutoff        float32
+	Model        string
+	SystemPrompt string
+	PromptPrefix string
+	Format       string
+	Creativity   float32
+	Cutoff       float32
 }
 
 // ParseFile reads the TOML configuration file and returns a ConfigFile.
@@ -225,12 +225,12 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 	definedConfigs, _ := data.(map[string]interface{})
 	for configId := range definedConfigs {
 		defaultSpec := ModelSpec{
-			Model:         "",
-			SystemPrompt:  "",
-			InitialPrompt: "",
-			Format:        "",
-			Creativity:    llama.DefaultOptions.Temp,
-			Cutoff:        llama.DefaultOptions.MinP,
+			Model:        "",
+			SystemPrompt: "",
+			PromptPrefix: "",
+			Format:       "",
+			Creativity:   llama.DefaultOptions.Temp,
+			Cutoff:       llama.DefaultOptions.MinP,
 		}
 		for k, v := range definedConfigs[configId].(map[string]interface{}) {
 			switch k {
@@ -244,8 +244,8 @@ func (c *ConfigFile) UnmarshalTOML(data interface{}) error {
 				defaultSpec.Format = v.(string)
 			case "system-prompt":
 				defaultSpec.SystemPrompt = v.(string)
-			case "initial-prompt":
-				defaultSpec.InitialPrompt = v.(string)
+			case "prompt-prefix":
+				defaultSpec.PromptPrefix = v.(string)
 			}
 		}
 		(*c)[configId] = defaultSpec
@@ -280,10 +280,10 @@ func (c *ConfigFile) Prompt(configId string) llama.Prompt {
 	return llama.Prompt{}
 }
 
-// InitialPrompt returns the initial prompt specified in the ConfigFile.
-func (c *ConfigFile) InitialPrompt(configId string) string {
+// PromptPrefix returns the prompt prefix specified in the ConfigFile.
+func (c *ConfigFile) PromptPrefix(configId string) string {
 	if spec, ok := (*c)[configId]; ok {
-		return spec.InitialPrompt
+		return spec.PromptPrefix
 	}
 	return ""
 }
