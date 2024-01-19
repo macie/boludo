@@ -69,15 +69,11 @@ test:
 build:
 	@echo '# Build CLI executable: $(DESTDIR)/$(CLI)' >&2
 	$(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o '../../$(DESTDIR)/$(CLI)'
+	@echo '# Add executable checksum to: $(DESTDIR)/sha256sum.txt' >&2
+	cd $(DESTDIR); sha256sum $(CLI) >> sha256sum.txt
 
 .PHONY: dist
-dist:
-	@echo '# Create CLI executables in $(DESTDIR)' >&2
-	GOOS=openbsd GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-openbsd_amd64"
-	GOOS=linux GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-linux_amd64"
-	GOOS=windows GOARCH=amd64 $(GO) build -C $(CLI_DIR) $(GOFLAGS) $(LDFLAGS) -o "../../$(DESTDIR)/$(CLI)-windows_amd64.exe"
-	@echo '# Create checksums' >&2
-	@cd $(DESTDIR); sha256sum * >sha256sum.txt
+dist: opinions-linux_amd64 opinions-openbsd_amd64 opinions-windows_amd64.exe
 
 .PHONY: install-dependencies
 install-dependencies:
@@ -95,3 +91,20 @@ cli-release: check test
 	@read -r NEW_VERSION; \
 		git tag "cli/v$$NEW_VERSION"; \
 		git push --tags
+
+
+#
+# SUPPORTED EXECUTABLES
+#
+
+# this force using `go build` to changes detection in Go project (instead of `make`)
+.PHONY: opinions-linux_amd64 opinions-openbsd_amd64 opinions-windows_amd64.exe
+
+opinions-linux_amd64:
+	GOOS=linux GOARCH=amd64 $(MAKE) CLI=$@ build
+
+opinions-openbsd_amd64:
+	GOOS=openbsd GOARCH=amd64 $(MAKE) CLI=$@ build
+
+opinions-windows_amd64.exe:
+	GOOS=windows GOARCH=amd64 $(MAKE) CLI=$@ build
