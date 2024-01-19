@@ -24,10 +24,4 @@ The repo contains command-line utility which versions are tagged as `cli/vYYYY.0
 
 ## License
 
-<!--
-Copyright (C) 2023 Maciej Żok
-
-SPDX-License-Identifier: GPL-3.0-or-later
--->
-
-[GPL-3.0-or-later](./LICENSES/GPL-3.0-or-later.txt) license ([in simple words](https://www.tldrlegal.com/license/gnu-general-public-license-v3-gpl-3)).
+MIT ([in simple words](https://www.tldrlegal.com/license/mit-license))

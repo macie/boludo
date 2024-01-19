@@ -1,7 +1,3 @@
-# Copyright (C) 2023 Maciej Żok
-#
-# SPDX-License-Identifier: GPL-3.0-or-later
-
 .POSIX:
 .SUFFIXES:
 
@@ -27,8 +23,6 @@ info:
 check:
 	@echo '# Static analysis: go vet' >&2
 	@go vet -C cmd/*
-	@echo '# License check: reuse lint' >&2
-	@reuse lint
 	
 test:
 	@echo '# Unit tests: go test .' >&2
