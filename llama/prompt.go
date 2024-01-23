@@ -37,6 +37,18 @@ var promptFormats = map[string]func(Prompt) string{
 
 		return fmt.Sprintf("%s%sGPT4 Correct Assistant: ", systemPrompt, userPrompt)
 	},
+	"zephyr": func(p Prompt) string {
+		systemPrompt := fmt.Sprintf("<|system|>\n%s</s>\n", p.System)
+		userPrompt := ""
+		for i := range p.userPrompt {
+			userPrompt += fmt.Sprintf("<|user|>\n%s</s>\n", p.userPrompt[i])
+		}
+		if userPrompt == "" {
+			userPrompt = "<|user|>\n</s>\n"
+		}
+
+		return fmt.Sprintf("%s%s<|assistant|>\n", systemPrompt, userPrompt)
+	},
 }
 
 // Prompt represents prompt for the LLM.
