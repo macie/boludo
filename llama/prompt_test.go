@@ -10,6 +10,8 @@ func TestPromptString(t *testing.T) {
 		prompt Prompt
 		want   string
 	}{
+		{Prompt{Format: "alpaca"}, "### Instruction:\n\n### Response:\n"},
+		{Prompt{Format: "Alpaca", System: "You are a helpful assistant."}, "You are a helpful assistant.\n\n### Instruction:\n\n### Response:\n"},
 		{Prompt{Format: "chatml"}, "<|im_start|>system\n<|im_end|>\n<|im_start|>user\n<|im_end|>\n<|im_start|>assistant\n"},
 		{Prompt{Format: "ChatML", System: "You are a helpful assistant."}, "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n<|im_end|>\n<|im_start|>assistant\n"},
 		{Prompt{Format: "openchat"}, "GPT4 Correct User: <|end_of_turn|>GPT4 Correct Assistant: "},
@@ -36,6 +38,8 @@ func TestPromptAdd(t *testing.T) {
 		userPrompts []string
 		want        string
 	}{
+		{"Alpaca", []string{}, "### Instruction:\n\n### Response:\n"},
+		{"alpaca", []string{"How are you?"}, "### Instruction:\nHow are you?\n\n### Response:\n"},
 		{"ChatML", []string{}, "<|im_start|>system\n<|im_end|>\n<|im_start|>user\n<|im_end|>\n<|im_start|>assistant\n"},
 		{"chatml", []string{"How are you?"}, "<|im_start|>system\n<|im_end|>\n<|im_start|>user\nHow are you?<|im_end|>\n<|im_start|>assistant\n"},
 		{"OpenChat", []string{}, "GPT4 Correct User: <|end_of_turn|>GPT4 Correct Assistant: "},

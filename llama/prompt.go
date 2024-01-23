@@ -10,6 +10,22 @@ var promptFormats = map[string]func(Prompt) string{
 	"": func(p Prompt) string {
 		return fmt.Sprintf("%s\n%s", p.System, strings.Join(p.userPrompt, "\n"))
 	},
+	"alpaca": func(p Prompt) string {
+		systemPrompt := ""
+		if p.System != "" {
+			systemPrompt = fmt.Sprintf("%s\n\n", p.System)
+		}
+
+		userPrompt := ""
+		for i := range p.userPrompt {
+			userPrompt += fmt.Sprintf("### Instruction:\n%s\n\n", p.userPrompt[i])
+		}
+		if userPrompt == "" {
+			userPrompt = "### Instruction:\n\n"
+		}
+
+		return fmt.Sprintf("%s%s### Response:\n", systemPrompt, userPrompt)
+	},
 	"chatml": func(p Prompt) string {
 		systemPrompt := fmt.Sprintf("<|im_start|>system\n%s<|im_end|>\n", p.System)
 		userPrompt := ""
