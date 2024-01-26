@@ -12,6 +12,8 @@
 !go.sum
 !go.mod
 
+!*.toml
+
 !README.md
 !LICENSE
 

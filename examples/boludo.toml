@@ -1,0 +1,39 @@
+# This is an example configuration file for boludo.
+#
+# It should be placed in the default config directory:
+# - Linux & OpenBSD: `${XDG_CONFIG_HOME}/boludo/boludo.toml` or `${HOME}/.config/boludo/boludo.toml`
+# - Windows: `%APPDATA%\boludo\boludo.toml`
+#
+#
+# Subcommands are defined as following:
+#   [subcommand_name]
+#   model = "path/to/model.gguf"  # in GGUF format, recommended: https://huggingface.co/TheBloke
+#   creativity = 0.9              # default: 1.0
+#   cutoff = 0.03                 # default: 0.0
+#   format = "Alpaca"             # available: Alpaca, ChatML, OpenChat, Zephyr
+#   system-prompt = "Here you can setup context of model."         # default: ""
+#   prompt-prefix = "This will be added before each user prompt."  # default: ""
+
+
+# Programmer's mentor based on the CodeNinja model (<https://huggingface.co/TheBloke/CodeNinja-1.0-OpenChat-7B-GGUF>).
+#
+# Usage:
+#   $ boludo coder "Why use OOP?"
+[coder]
+model = "${HOME}/models/codeninja-1.0-openchat-7b.Q4_K_S.gguf"
+creativity = 0.9
+cutoff = 0.03
+system-prompt = "You are an AI programming assistant utilizing the CodeNinja model. You only answer questions related to computer science. Your answers are concise."
+format = "OpenChat"
+
+
+# Proofreading assistant based on the "Karen TheEditor V2" model (<https://huggingface.co/TheBloke/Karen_TheEditor_V2_STRICT_Mistral_7B-GGUF>)
+#
+# Usage:
+#   $ boludo proofreader "How you doing?"
+[proofreader]
+model = "${HOME}/models/karen_theeditor_v2_strict_mistral_7b.Q4_K_S.gguf"
+creativity = 1.2
+cutoff = 0.03
+prompt-prefix = 'Edit the following text for spelling and grammar mistakes:'
+format = 'ChatML'
